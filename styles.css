@@ -1,0 +1,526 @@
+/* --------------------------------------------------------------------------
+    Reset & Core Variables
+    -------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --bg-obsidian: #08090d;
+    --bg-card: rgba(15, 23, 42, 0.75);
+    --bg-terminal: #060913;
+    --cyan-glow: #00f2fe;
+    --blue-glow: #4facfe;
+    --cyan-dim: rgba(0, 242, 254, 0.15);
+    --border-glow: rgba(0, 242, 254, 0.3);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--bg-obsidian);
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+/* --------------------------------------------------------------------------
+    Background & Grid Overlay Effects
+    -------------------------------------------------------------------------- */
+.cyber-bg {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 50% 20%, rgba(0, 242, 254, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(79, 172, 254, 0.05) 0%, transparent 40%),
+        var(--bg-obsidian);
+    z-index: 1;
+}
+
+.grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+    1. Startup Sequence Animation
+    -------------------------------------------------------------------------- */
+#startup-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: #ffffff;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+}
+
+/* The white background stays solid from the first paint. Only the spinner and text fade in.
+    app.js adds .is-visible after the first paint. */
+#startup-overlay .spinner,
+#startup-overlay .startup-text {
+    opacity: 0;
+    transition: opacity 0.8s ease-out;
+}
+
+#startup-overlay.is-visible .spinner,
+#startup-overlay.is-visible .startup-text {
+    opacity: 1;
+}
+
+#startup-overlay.fade-out {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 1.2s;
+}
+
+.spinner {
+    width: 44px;
+    height: 44px;
+    border: 3.5px solid #e2e8f0;
+    border-top-color: #00f2fe;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.startup-text {
+    margin-top: 16px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* --------------------------------------------------------------------------
+    Main UI Layout
+    -------------------------------------------------------------------------- */
+.app-layout {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    max-width: 440px;
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
+    padding: 20px 20px;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 1s ease-out 0.2s, transform 1s ease-out 0.2s;
+}
+
+.app-layout.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Landscape phones: two columns (connect form left, history right) so the screen fits its short height */
+@media (orientation: landscape) and (max-height: 600px) {
+    .app-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: 20px;
+        row-gap: 12px;
+        align-content: center;
+        max-width: 900px;
+        overflow-y: auto;
+    }
+
+    .terminal-container {
+        margin: 0;
+    }
+
+    .history-section {
+        margin-top: 0;
+    }
+
+    .footer {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 6px 16px;
+    }
+
+    .footer .footer-copy,
+    .footer .footer-repo {
+        display: inline;
+        margin-top: 0;
+    }
+}
+
+/* --------------------------------------------------------------------------
+    3. Terminal Box (PhoneGap / Cocoon.io Inspired CRT Screen)
+    -------------------------------------------------------------------------- */
+.terminal-container {
+    margin: auto 0;
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-glow);
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 0 25px rgba(0, 242, 254, 0.12), inset 0 0 15px rgba(0, 242, 254, 0.05);
+    position: relative;
+    overflow: hidden;
+    animation: pulseGlow 4s ease-in-out infinite;
+}
+
+.terminal-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--cyan-glow), transparent);
+}
+
+.scanlines {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.terminal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.terminal-prompt {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--cyan-glow);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.terminal-prompt svg {
+    width: 14px;
+    height: 14px;
+    stroke: var(--cyan-glow);
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.server-input {
+    width: 100%;
+    background: var(--bg-terminal);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--cyan-glow);
+    outline: none;
+    transition: all 0.25s ease;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.server-input:focus {
+    border-color: var(--cyan-glow);
+    box-shadow: 0 0 15px rgba(0, 242, 254, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.server-input::placeholder {
+    color: #475569;
+}
+
+.btn-connect {
+    width: 100%;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--cyan-glow), var(--blue-glow));
+    color: #060913;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.25s ease;
+    box-shadow: 0 0 20px rgba(0, 242, 254, 0.35);
+}
+
+.btn-connect:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 28px rgba(0, 242, 254, 0.55);
+}
+
+.btn-connect:active {
+    transform: translateY(1px);
+}
+
+/* --------------------------------------------------------------------------
+    2. Visited IP History List
+    -------------------------------------------------------------------------- */
+.history-section {
+    width: 100%;
+    margin-top: 16px;
+}
+
+.history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 0 4px;
+}
+
+.history-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-clear-all {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.btn-clear-all:hover {
+    color: #ef4444;
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 140px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(6, 9, 19, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.history-item:hover {
+    border-color: rgba(0, 242, 254, 0.4);
+    background: rgba(6, 9, 19, 0.9);
+}
+
+.history-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    cursor: pointer;
+    flex: 1;
+}
+
+.history-ip {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+.history-time {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+}
+
+.history-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-reconnect {
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(0, 242, 254, 0.1);
+    border: 1px solid rgba(0, 242, 254, 0.25);
+    color: var(--cyan-glow);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-reconnect:hover {
+    background: rgba(0, 242, 254, 0.25);
+}
+
+.btn-delete-ip {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.btn-delete-ip:hover {
+    color: #ef4444;
+}
+
+.empty-history {
+    text-align: center;
+    padding: 16px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    background: rgba(6, 9, 19, 0.3);
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.footer-link {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+    color: var(--cyan-glow);
+}
+
+.footer-copy {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: #475569;
+    margin-top: 4px;
+}
+
+.footer-repo {
+    display: block;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.2s ease;
+}
+
+.footer-repo:hover {
+    color: var(--cyan-glow);
+}
+
+/* Modal Box */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 9000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-glow);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(0, 242, 254, 0.2);
+}
+
+.modal-title {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--cyan-glow);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+.modal-body {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+@keyframes pulseGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px rgba(0, 242, 254, 0.12), inset 0 0 15px rgba(0, 242, 254, 0.05);
+    }
+
+    50% {
+        box-shadow: 0 0 30px rgba(0, 242, 254, 0.25), inset 0 0 20px rgba(0, 242, 254, 0.1);
+    }
+}

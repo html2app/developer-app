@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>html2app.dev Developer App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Background Matrix / Cyber Grid -->
+    <div class="cyber-bg"></div>
+    <div class="grid-overlay"></div>
+
+    <!-- 1. Startup Sequence Animation Overlay (White fade out) -->
+    <div id="startup-overlay">
+        <div class="spinner"></div>
+        <div class="startup-text">html2app.dev engine booting...</div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="app-layout" id="app-layout">
+        
+        <!-- 3. Terminal Box (PhoneGap / Cocoon.io Style Screen) -->
+        <main class="terminal-container">
+            <div class="scanlines"></div>
+            
+            <div class="terminal-header">
+                <div class="terminal-prompt">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="4 17 10 11 4 5"></polyline>
+                        <line x1="12" y1="19" x2="20" y2="19"></line>
+                    </svg>
+                    Server Address
+                </div>
+            </div>
+
+            <form id="connect-form" onsubmit="handleFormSubmit(event)">
+                <div class="input-group">
+                    <input type="text" id="ip-input" class="server-input" 
+                           placeholder="192.168.1.100:3000" 
+                           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required>
+                </div>
+
+                <button type="submit" class="btn-connect">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    Connect
+                </button>
+            </form>
+
+        </main>
+
+        <!-- 2. Visited IP History List -->
+        <section class="history-section">
+            <div class="history-header">
+                <div class="history-title">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    Recent Connections (<span id="history-count">0</span>)
+                </div>
+                <button type="button" class="btn-clear-all" onclick="clearAllHistory()">Clear All</button>
+            </div>
+
+            <div class="history-list" id="history-list">
+                <!-- Dynamically populated via JS -->
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <span class="footer-link" onclick="openModal('TERMS & PRIVACY', 'html2app.dev developer app connects directly to your local development server over your local area network (LAN). No source code or credentials are saved or transmitted to cloud servers.')">
+                TERMS &amp; PRIVACY
+            </span>
+            <div class="footer-copy">© 2026 html2app.dev • Mobile Live Previewer</div>
+            <a class="footer-copy footer-repo" href="https://github.com/html2app/developer-app" target="_blank" rel="noopener noreferrer">View source on GitHub</a>
+        </footer>
+
+    </div>
+
+    <!-- Generic Modal -->
+    <div class="modal-overlay" id="generic-modal">
+        <div class="modal-card">
+            <div class="modal-title" id="modal-title">TITLE</div>
+            <div class="modal-body" id="modal-body">Description text...</div>
+            <button class="btn-connect" style="padding: 10px;" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Pure Vanilla JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
